@@ -88,7 +88,7 @@ Projects:
 
 
 def generate_questions(position, skills_with_scale, experience, projects):
-    llm = OpenAI(max_tokens=3000, temperature=0.6)
+    llm = OpenAI(max_tokens=3500, temperature=0.6)
     
     class Question(BaseModel):
         question: str = Field(description="The text of the quiz question")
