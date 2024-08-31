@@ -88,7 +88,7 @@ Projects:
 
 
 def generate_questions(position, skills_with_scale, experience, projects):
-    llm = OpenAI(max_tokens=3000, temperature=0.6)
+    llm = OpenAI(max_tokens=2900, temperature=0.5)
     
     class Question(BaseModel):
         question: str = Field(description="The text of the quiz question")
@@ -115,10 +115,10 @@ def generate_questions(position, skills_with_scale, experience, projects):
             Projects: {projects}
 
             Categories and Number of Questions:
-            - Technical Questions (6 questions): Based on the skills data.
-            - Logical Reasoning Questions (6 questions): Based on mathematics. These are compulsory questions.
-            - Communication Questions (6 questions): Based on real placement interviews.
-            - Work Experience Questions (6 questions): Based on working in a company on real-time projects. Avoid irrelevant questions.
+            - Technical Questions (4 questions): Based on the skills data.
+            - Logical Reasoning Questions (4 questions): Based on mathematics. These are compulsory questions.
+            - Communication Questions (4 questions): Based on real placement interviews.
+            - Work Experience Questions (4 questions): Based on working in a company on real-time projects. Avoid irrelevant questions.
 
             Instructions:
             - please predict the correct answer for each question.
