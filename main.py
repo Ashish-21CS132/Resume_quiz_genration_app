@@ -8,16 +8,17 @@ from langchain.chains import LLMChain
 from langchain_core.pydantic_v1 import BaseModel, Field
 from typing import List
 from langchain.output_parsers import PydanticOutputParser
-from langchain_community.cache import InMemoryCache
+from langchain_core.caches import InMemoryCache
 import langchain
 from langchain_openai import ChatOpenAI
+from langchain_core.globals import set_llm_cache
 
 
 # Set OpenAI API key from environment variable
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 #Enabled caching
-langchain.llm_cache = InMemoryCache()
+set_llm_cache(InMemoryCache())
 
 # Function to extract text and information from a resume PDF
 def extract_info_from_pdf_new(pdf_file):
@@ -89,7 +90,7 @@ Projects:
 
 
 def generate_questions(position, skills_with_scale, experience, projects):
-    llm = ChatOpenAI(max_tokens=2900, temperature=0.5, model="gpt-4o-mini")
+    llm = ChatOpenAI(max_tokens=2900, temperature=0, model="gpt-4o-mini")
     
     class Question(BaseModel):
         question: str = Field(description="The text of the quiz question")
@@ -230,7 +231,7 @@ def main():
                         st.session_state.experience,
                         st.session_state.projects,
                     )
-                    print(st.session_state.quiz_data)
+                    # print(st.session_state.quiz_data)
                 st.session_state.quiz_generated = True
                 st.session_state.user_answers = {}
 
