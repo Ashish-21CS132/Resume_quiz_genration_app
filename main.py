@@ -90,7 +90,7 @@ Projects:
 
 
 def generate_questions(position, skills_with_scale, experience, projects):
-    llm = ChatOpenAI(max_tokens=2900, temperature=0, model="gpt-4o-mini")
+    llm = ChatOpenAI(max_tokens=2900, temperature=0.5, model="gpt-4o-mini")
     
     class Question(BaseModel):
         question: str = Field(description="The text of the quiz question")
