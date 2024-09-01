@@ -10,6 +10,7 @@ from typing import List
 from langchain.output_parsers import PydanticOutputParser
 from langchain_community.cache import InMemoryCache
 import langchain
+from langchain_openai import ChatOpenAI
 
 
 # Set OpenAI API key from environment variable
@@ -26,7 +27,7 @@ def extract_info_from_pdf_new(pdf_file):
     for page in reader.pages:
         resume_text += page.extract_text()
 
-    openai_llm = OpenAI(max_tokens=700, temperature=0.7)
+    openai_llm = ChatOpenAI(max_tokens=700, temperature=0.7,model="gpt-4o-mini")
 
     prompt_template_resume = PromptTemplate(
         input_variables=["resume_text"],
@@ -88,7 +89,7 @@ Projects:
 
 
 def generate_questions(position, skills_with_scale, experience, projects):
-    llm = OpenAI(max_tokens=2900, temperature=0.5)
+    llm = ChatOpenAI(max_tokens=2900, temperature=0.5, model="gpt-4o-mini")
     
     class Question(BaseModel):
         question: str = Field(description="The text of the quiz question")
@@ -115,10 +116,10 @@ def generate_questions(position, skills_with_scale, experience, projects):
             Projects: {projects}
 
             Categories and Number of Questions:
-            - Technical Questions (4 questions): Based on the skills data.
-            - Logical Reasoning Questions (4 questions): Based on mathematics. These are compulsory questions.
-            - Communication Questions (4 questions): Based on real placement interviews.
-            - Work Experience Questions (4 questions): Based on working in a company on real-time projects. Avoid irrelevant questions.
+            - Technical Questions (8 questions): Based on the skills data.
+            - Logical Reasoning Questions (8 questions): Based on mathematics. These are compulsory questions.
+            - Communication Questions (7 questions): Based on real placement interviews.
+            - Work Experience Questions (7 questions): Based on working in a company on real-time projects. Avoid irrelevant questions.
 
             Instructions:
             - please predict the correct answer for each question.
@@ -194,15 +195,20 @@ def main():
     if st.session_state.submitted and st.session_state.extracted_skills:
         st.write("Select up to 5 skills from the extracted list:")
         st.write("Note: Please scale your skills before selecting the other skills")
+        
+        # Ensure that default values are a subset of the available options
+        valid_defaults = [skill for skill in st.session_state.selected_skills if skill in st.session_state.extracted_skills]
+        
         selected_skills = st.multiselect(
             "Choose up to 5 skills",
             options=st.session_state.extracted_skills,
-            default=st.session_state.selected_skills,
+            default=valid_defaults,
             key="multiselect",
         )
 
         st.session_state.selected_skills = selected_skills
 
+        # Rest of the code remains the same
         if len(st.session_state.selected_skills) > 5:
             st.error(
                 "You can select a maximum of 5 skills. Please adjust your selection."
@@ -214,6 +220,8 @@ def main():
                 scale = st.slider(f"Rate your skill level in {skill}:", 1, 10, 0)
                 skills_with_scale[skill] = scale
 
+        # Rest of the code...
+
             if st.button("Generate Quiz"):
                 with st.spinner("Generating quiz questions..."):
                     st.session_state.quiz_data = generate_questions(
@@ -222,6 +230,7 @@ def main():
                         st.session_state.experience,
                         st.session_state.projects,
                     )
+                    print(st.session_state.quiz_data)
                 st.session_state.quiz_generated = True
                 st.session_state.user_answers = {}
 
