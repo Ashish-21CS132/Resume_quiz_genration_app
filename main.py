@@ -28,27 +28,27 @@ def extract_info_from_pdf_new(pdf_file):
     for page in reader.pages:
         resume_text += page.extract_text()
 
-    openai_llm = ChatOpenAI(max_tokens=700, temperature=0.7,model="gpt-4o-mini")
+    openai_llm = ChatOpenAI(model="gpt-4o-mini",max_tokens=700, temperature=0.7)
 
     prompt_template_resume = PromptTemplate(
         input_variables=["resume_text"],
         template="""
-Extract the following sections from the given resume: skills, experience, and projects. If any section is not clearly defined, extract the most relevant information related to that section.
+        Extract the following sections from the given resume: skills, experience, and projects. If any section is not clearly defined, extract the most relevant information related to that section.
 
-Resume:
-{resume_text}
+        Resume:
+        {resume_text}
 
-Please provide the extracted information in the following format:
+        Please provide the extracted information in the following format:
 
-Skills:
-[Extracted skills information]
+        Skills:
+        [Extracted skills information]
 
-Experience:
-[Extracted experience information]
+        Experience:
+        [Extracted experience information]
 
-Projects:
-[Extracted projects information]
-""",
+        Projects:
+        [Extracted projects information]
+        """,
     )
 
     # Set up LLMChain for the combined extraction
@@ -79,7 +79,8 @@ Projects:
 
     # If skills_list is empty, use all words in the skills section as skills
     if not skills_list:
-        skills_list = re.findall(r"\b\w+\b", skills_section.replace("Skills:", ""))
+        # skills_list = re.findall(r"\b\w+\b", skills_section.replace("Skills:", ""))
+        skills_list=["C++","Python", "Java"]
 
     return (
         list(set(skills_list)),
@@ -90,12 +91,12 @@ Projects:
 
 
 def generate_questions(position, skills_with_scale, experience, projects):
-    llm = ChatOpenAI(max_tokens=2900, temperature=0.5, model="gpt-4o-mini")
+    llm = ChatOpenAI(model="chatgpt-4o-latest",max_tokens=4000, temperature=0.5)
     
     class Question(BaseModel):
         question: str = Field(description="The text of the quiz question")
         options: List[str] = Field(description="The multiple-choice options for the quiz question")
-        correct_answer: str = Field(description="The correct answer for the quiz question")
+        correct_answer: str = Field(description="The correct text answer for the quiz question")
 
     class Category(BaseModel):
         category: str = Field(description="The category of the quiz questions")
@@ -107,36 +108,37 @@ def generate_questions(position, skills_with_scale, experience, projects):
     parser = PydanticOutputParser(pydantic_object=Quiz)
     
     prompt_template = PromptTemplate(
-        input_variables=["position", "skills", "experience", "projects"],
-        template="""
-            You are an expert in creating educational content. Based on the following information, generate a quiz with multiple-choice questions (MCQs) focused on the categories listed. Ensure each question has four answer options (labeled A, B, C, D) and only one correct answer.
+    input_variables=["position", "skills", "experience", "projects"],
+    template="""
+        You are an expert in creating advanced educational content. Based on the following information, generate a challenging quiz with multiple-choice questions (MCQs) focused on the categories listed. Ensure each question has four answer options (labeled A, B, C, D) and only one correct answer.
 
-            Job Position: {position}
-            Skills with Scale: {skills}
-            Work Experience: {experience}
-            Projects: {projects}
+        Job Position: {position}
+        Skills with Scale: {skills}
+        Work Experience: {experience}
+        Projects: {projects}
 
-            Categories and Number of Questions:
-            - Technical Questions (8 questions): Based on the skills data.
-            - Logical Reasoning Questions (8 questions): Based on mathematics. These are compulsory questions.
-            - Communication Questions (7 questions): Based on real placement interviews.
-            - Work Experience Questions (7 questions): Based on working in a company on real-time projects. Avoid irrelevant questions.
+        Categories and Number of Questions:
+        - Technical Questions (8 questions): Create questions that are complex and require in-depth knowledge and understanding of the skills listed. Focus on advanced technical scenarios, problem-solving, and critical thinking skills relevant to the job role.
+        - Logical Reasoning Questions (8 questions): Develop questions that are mathematically challenging and involve multiple steps or advanced reasoning. These should test high-level analytical and problem-solving abilities and should be compulsory questions.
+        - Communication Questions (7 questions): Based on real placement interviews, focusing on assessing effective communication skills in various job-related scenarios.
+        - Work Experience Questions (7 questions): Based on working in a company on real-time projects, focusing on practical challenges and decision-making in a professional environment. Avoid irrelevant questions.
 
-            Instructions:
-            - please predict the correct answer for each question.
-            - do not mistake the correct answer for the wrong answer. 
-            - Strictly adhere to the number of questions for each category as specified above.
-            - Each question must be relevant to the Job Position and Skills provided.
-            - Each question should test the knowledge and abilities necessary for the job role.
-            - Ensure that the Logical Reasoning Questions are based on mathematics and are challenging yet appropriate for the job role.
-            - Format the output as a JSON object with the structure defined by the following Pydantic models:
+        Instructions:
+        - Clearly indicate the correct answer for each question.
+        - Ensure all questions are challenging and align with the advanced skill level required for the job position.
+        - Strictly adhere to the number of questions for each category as specified above.
+        - Each question must be relevant to the Job Position and Skills provided.
+        - Each question should test the deep knowledge and abilities necessary for the job role.
+        - Ensure that the Logical Reasoning Questions are based on advanced mathematics and are challenging yet appropriate for the job role.
+        - Format the output as a JSON object with the structure defined by the following Pydantic models:
 
-            {format_instructions}
+        {format_instructions}
 
-            Generate the quiz data according to these specifications.
-            """,
-        partial_variables={"format_instructions": parser.get_format_instructions()},
+        Generate the quiz data according to these specifications, ensuring a high level of difficulty for the Technical and Logical Reasoning sections.
+    """,
+    partial_variables={"format_instructions": parser.get_format_instructions()},
     )
+
     
     chain = LLMChain(llm=llm, prompt=prompt_template)
     response = chain.run(
@@ -183,12 +185,15 @@ def main():
     if submitted:
         st.session_state.submitted = True
         if resume_pdf is not None:
-            with st.spinner("Extracting information from resume..."):
-                (
-                    st.session_state.extracted_skills,
-                    st.session_state.experience,
-                    st.session_state.projects,
-                ) = extract_info_from_pdf_new(resume_pdf)
+            try:
+                with st.spinner("Extracting information from resume..."):
+                    (
+                        st.session_state.extracted_skills,
+                        st.session_state.experience,
+                        st.session_state.projects,
+                    ) = extract_info_from_pdf_new(resume_pdf)
+            except Exception as e:
+                st.error(f"An error occurred: {e}")        
         else:
             st.error("Please upload a resume PDF.")
 
