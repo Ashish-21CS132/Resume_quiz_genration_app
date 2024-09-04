@@ -28,7 +28,7 @@ def extract_info_from_pdf_new(pdf_file):
     for page in reader.pages:
         resume_text += page.extract_text()
 
-    openai_llm = ChatOpenAI(model="gpt-4o-mini",max_tokens=700, temperature=0.7)
+    openai_llm = ChatOpenAI(model="gpt-4o-mini",max_tokens=1000, temperature=0.7)
 
     prompt_template_resume = PromptTemplate(
         input_variables=["resume_text"],
@@ -121,7 +121,7 @@ def generate_questions(position, skills_with_scale, experience, projects):
         - Technical Questions (8 questions): Create questions that are complex and require in-depth knowledge and understanding of the skills listed. Focus on advanced technical scenarios, problem-solving, and critical thinking skills relevant to the job role.
         - Logical Reasoning Questions (8 questions): Develop questions that are mathematically challenging and involve multiple steps or advanced reasoning. These should test high-level analytical and problem-solving abilities and should be compulsory questions.
         - Communication Questions (7 questions): Based on real placement interviews, focusing on assessing effective communication skills in various job-related scenarios.
-        - Work Experience Questions (7 questions): Based on working in a company on real-time projects, focusing on practical challenges and decision-making in a professional environment. Avoid irrelevant questions.
+        - Work Experience Questions (7 questions): Based on working in a company on real-time projects, focusing on practical challenges and decision-making in a professional environment. Avoid irrelevant questions.Please ask questions from the all sections of workexperience sections.
 
         Instructions:
         - Clearly indicate the correct answer for each question.
