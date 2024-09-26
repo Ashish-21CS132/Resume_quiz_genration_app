@@ -11,10 +11,7 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain_core.caches import InMemoryCache
 from langchain_openai import ChatOpenAI
 from langchain_core.globals import set_llm_cache
-from deepeval import assert_test
-from deepeval.test_case import LLMTestCase
-from deepeval.metrics import AnswerRelevancyMetric
-import requests
+
 
 
 # Set OpenAI API key from environment variable
@@ -39,21 +36,6 @@ def read_file(file_path):
 
 
 # Function to extract text and information from a resume PDF
-
-
-def test_answer_relevancy(input, output):
-    answer_relevancy_metric = AnswerRelevancyMetric(
-        threshold=0.5, model="gpt-4o-mini", include_reason=True
-    )
-    test_case = LLMTestCase(
-        input=input,
-        actual_output=output,
-    )
-    answer_relevancy_metric.measure(test_case)
-    print(answer_relevancy_metric.score)
-    print(answer_relevancy_metric.reason)
-    assert_test(test_case, [answer_relevancy_metric])
-
 
 def extract_info_from_pdf_new(pdf_file):
     # print("file_path is :",file_path)
