@@ -2,3 +2,7 @@
 app.py
 .env
 .ipynb
+.deepeval
+app2.py
+backend.py
+main2.py

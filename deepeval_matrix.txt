@@ -1,0 +1,36 @@
+---Deepeval Matrices Scores---
+
+Answer Relevancy Score: 1.0
+Answer Relevancy Reason: The score is 1.00 because there are no irrelevant statements in the output, indicating that all content is directly relevant to the job position and the specified requirements.
+
+
+Contextual Precision Score: 1.0
+Contextual Precision Reason: The score is 1.00 because all relevant nodes are ranked higher than irrelevant nodes, ensuring that the content aligns perfectly with the input requirements. The first node highlights the job position being related to the quiz, while the subsequent nodes emphasize the relevance of the skills, work experience, and projects. However, the score is not higher due to the presence of one irrelevant node, which is ranked last and does not contribute meaningful content to the quiz.
+
+
+Faithfulness Score: 0.9583333333333334                                                             
+Faithfulness Reason: The score is 0.96 because the actual output lacks specific mention of the Router feature in ExpressJS that handles different HTTP verbs at a single route, which leads to a slight misalignment with the retrieval context.
+
+
+Contextual Relevancy Score: 0.8666666666666666
+Contextual Relevancy Reason: The score is 0.87 because the context mainly consists of logical reasoning questions and their answers, which do not relate to creating a quiz tailored to the specified job position and skills, as evidenced by examples like 'Q1. Given a Series 2, 5, 12.5, ?, 78.125, 195.3125' that do not contribute to the quiz creation.
+
+
+RAGAS Score: 0.6828915684905251
+RAGAS Reason: None
+
+
+Contextual Recall Score: 0.4
+Contextual Recall Reason: The score is 0.40 because while there are relevant mentions in the node(s) in retrieval context related to technical and logical questions, the lack of specific quiz structures and examples limits the overall contextual relevance.
+    
+
+Summarization Score: 0.02702702702702703
+Summarization Reason: The score is 0.03 because the summary contains a significant contradiction regarding the output of a JavaScript expression, which misrepresents the original text's information. Additionally, it lacks any extra relevant information while failing to address several pertinent questions that the original text could answer.
+
+
+Bias Score: 0                                                                                      
+Bias Reason: The score is 0.00 because there are no identified reasons for bias in the actual output, indicating a thorough and balanced perspective.
+
+
+Toxicity Score: 0                                                                                  
+Toxicity Reason: The score is 0.00 because the output is completely free of toxic language or sentiment, demonstrating a positive and constructive tone.
