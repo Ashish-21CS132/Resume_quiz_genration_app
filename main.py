@@ -436,24 +436,32 @@ def calculate_scorecard(quiz_data, user_answers):
 
 
 def display_scorecard(scorecard):
-    st.header("Quiz Scorecard")
+    with st.container():
+        st.header("Quiz Scorecard")
 
-    for category, score in scorecard.items():
-        if category != "Total":
-            correct = score["correct"]
-            total = score["total"]
-            percentage = (correct / total) * 100 if total > 0 else 0
-            st.markdown(f"{category} Score:- **{percentage:.2f}%**")
+        for category, score in scorecard.items():
+            if category != "Total":
+                correct = score["correct"]
+                total = score["total"]
+                percentage = (correct / total) * 100 if total > 0 else 0
 
-    total_correct = scorecard["Total"]["correct"]
-    total_questions = scorecard["Total"]["total"]
-    total_percentage = (
-        (total_correct / total_questions) * 100 if total_questions > 0 else 0
-    )
+                # Use an expander for each category to make it collapsible
+                with st.expander(f"{category} Score", expanded=True):
+                    st.markdown(f"**Correct**: {correct}/{total}")
+                    st.progress(percentage / 100)
+                    st.markdown(f"**Percentage**: **{percentage:.2f}%**")
 
-    st.write(
-        f"Total Score: {total_correct}/{total_questions} ({total_percentage:.2f}%)"
-    )
+        total_correct = scorecard["Total"]["correct"]
+        total_questions = scorecard["Total"]["total"]
+        total_percentage = (
+            (total_correct / total_questions) * 100 if total_questions > 0 else 0
+        )
+
+        st.write(
+            f"Total Score: {total_correct}/{total_questions} ({total_percentage:.2f}%)"
+        )
+        # Add a progress bar for total score
+        st.progress(total_percentage / 100)
 
 
 if __name__ == "__main__":
