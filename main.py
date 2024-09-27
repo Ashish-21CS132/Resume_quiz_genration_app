@@ -38,8 +38,6 @@ def read_file(file_path):
 # Function to extract text and information from a resume PDF
 
 def extract_info_from_pdf_new(pdf_file):
-    # print("file_path is :",file_path)
-    # read_file(file_path)
     # Read PDF content
     reader = PyPDF2.PdfReader(pdf_file)
     resume_text = ""
@@ -51,7 +49,8 @@ def extract_info_from_pdf_new(pdf_file):
     prompt_template_resume = PromptTemplate(
         input_variables=["resume_text"],
         template="""
-        Extract the following sections from the given resume: skills, experience, and projects. If any section is not clearly defined, extract the most relevant information related to that section.
+        Extract only the skills section from the given resume. If a skills section is not clearly defined, extract the most relevant information related to skills.
+        Provide a maximum of 20 most relevant and important skills.
 
         Resume:
         {resume_text}
@@ -59,55 +58,28 @@ def extract_info_from_pdf_new(pdf_file):
         Please provide the extracted information in the following format:
 
         Skills:
-        [Extracted skills information]
-
-        Experience:
-        [Extracted experience information]
-
-        Projects:
-        [Extracted projects information]
+        [List of up to 20 skills, one per line]
         """,
     )
 
-    # Set up LLMChain for the combined extraction
+    # Set up LLMChain for the skills extraction
     extraction_chain = LLMChain(llm=openai_llm, prompt=prompt_template_resume)
 
-    # Get the extracted information by running the chain
-    extracted_info = extraction_chain.run({"resume_text": resume_text})
+    # Get the extracted skills by running the chain
+    extracted_skills = extraction_chain.run({"resume_text": resume_text})
 
-    # Split the extracted information into sections
-    sections = re.split(r"\n\s*\n", extracted_info)
+    # Extract the skills list, remove hyphens, and limit to 15 skills
+    skills_section = extracted_skills.split("Skills:")[1].strip()
+    skills_list = [skill.strip().lstrip('- ') for skill in skills_section.split("\n") if skill.strip()][:20]
 
-    skills_section = next(
-        (s for s in sections if s.lower().strip().startswith("skills:")), ""
-    )
-    experience_section = next(
-        (s for s in sections if s.lower().strip().startswith("experience:")), ""
-    )
-    projects_section = next(
-        (s for s in sections if s.lower().strip().startswith("projects:")), ""
-    )
-
-    # Extract specific skills
-    skills_list = re.findall(
-        r"\b(Java|Python|C|C\+\+|JavaScript|MySQL|PostgreSQL|HTML|CSS|AWS|Django|React|NodeJS|ExpressJS|Docker|Langchain|fastapi|flask|MongoDB|Machine Learning)\b",
-        skills_section,
-        re.IGNORECASE,
-    )
-
-    # If skills_list is empty, use all words in the skills section as skills
+    # If skills_list is empty, use a default list of skills
     if not skills_list:
-        # skills_list = re.findall(r"\b\w+\b", skills_section.replace("Skills:", ""))
         skills_list = ["C++", "Python", "Java"]
 
-    return (
-        list(set(skills_list)),
-        experience_section.replace("Experience:", "").strip(),
-        projects_section.replace("Projects:", "").strip(),
-    )
+    return list(set(skills_list))
 
 
-def generate_questions(skills_with_scale, experience, projects):
+def generate_questions(skills_with_scale):
     # Read logical reasoning questions from file
     logical_questions = read_file(file_path)
     if not logical_questions:
@@ -144,8 +116,8 @@ def generate_questions(skills_with_scale, experience, projects):
         input_variables=[
             
             "skills",
-            "experience",
-            "projects",
+            # "experience",
+            # "projects",
             "logical_questions",
         ],
         template="""
@@ -153,8 +125,7 @@ def generate_questions(skills_with_scale, experience, projects):
 
         
         Skills with Scale: {skills}
-        Work Experience: {experience}
-        Projects: {projects}
+        
 
         Categories and Number of Questions:
         1. Technical Questions (7 questions):
@@ -235,8 +206,8 @@ def generate_questions(skills_with_scale, experience, projects):
             {
                 
                 "skills": skills_with_scale,
-                "experience": experience,
-                "projects": projects,
+                # "experience": experience,
+                # "projects": projects,
                 "logical_questions": logical_questions,
             }
         )
@@ -302,11 +273,12 @@ def main():
         if resume_pdf is not None:
             try:
                 with st.spinner("Extracting information from resume..."):
-                    (
-                        st.session_state.extracted_skills,
-                        st.session_state.experience,
-                        st.session_state.projects,
-                    ) = extract_info_from_pdf_new(resume_pdf)
+                    st.session_state.extracted_skills=extract_info_from_pdf_new(resume_pdf)
+                    # (
+                    #     st.session_state.extracted_skills,
+                    #     # st.session_state.experience,
+                    #     # st.session_state.projects,
+                    # ) = extract_info_from_pdf_new(resume_pdf)
             except Exception as e:
                 st.error(f"An error occurred: {e}")
         else:
@@ -352,8 +324,8 @@ def main():
                     st.session_state.quiz_data = generate_questions(
                         # job_title,
                         skills_with_scale,
-                        st.session_state.experience,
-                        st.session_state.projects,
+                        # st.session_state.experience,
+                        # st.session_state.projects,
                     )
 
                     # print(st.session_state.quiz_data)
