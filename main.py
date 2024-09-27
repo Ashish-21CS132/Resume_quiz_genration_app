@@ -50,7 +50,6 @@ def extract_info_from_pdf_new(pdf_file):
         input_variables=["resume_text"],
         template="""
         Extract only the skills section from the given resume. If a skills section is not clearly defined, extract the most relevant information related to skills.
-        Provide a maximum of 20 most relevant and important skills.
 
         Resume:
         {resume_text}
@@ -58,7 +57,7 @@ def extract_info_from_pdf_new(pdf_file):
         Please provide the extracted information in the following format:
 
         Skills:
-        [List of up to 20 skills, one per line]
+        [List of skills, one per line]
         """,
     )
 
@@ -68,9 +67,9 @@ def extract_info_from_pdf_new(pdf_file):
     # Get the extracted skills by running the chain
     extracted_skills = extraction_chain.run({"resume_text": resume_text})
 
-    # Extract the skills list, remove hyphens, and limit to 15 skills
+    # Extract the skills list and remove hyphens
     skills_section = extracted_skills.split("Skills:")[1].strip()
-    skills_list = [skill.strip().lstrip('- ') for skill in skills_section.split("\n") if skill.strip()][:20]
+    skills_list = [skill.strip().lstrip('- ') for skill in skills_section.split("\n") if skill.strip()]
 
     # If skills_list is empty, use a default list of skills
     if not skills_list:
