@@ -169,37 +169,46 @@ def generate_questions(skills_with_scale, experience, projects):
 
            - Do not modify the selected questions in any way. Use them exactly as provided, including options and correct answers.
            - Ensure that the chosen questions are diverse and cover different types of logical reasoning.
+        
+        3. DataScience Questions (8 questions):
+           Create medium-level questions covering the following areas:
 
-        3. Generative AI Questions (8 questions):
+           a) Data analysis techniques and statistical methods
+           b) Machine learning algorithms (supervised and unsupervised)
+           c) Feature engineering and selection
+           d) Model evaluation and validation
+           e) Natural Language Processing (NLP) concepts and techniques
+           f) Time series analysis
+           g) Data visualization best practices
+           h) Ethical considerations in data science
+
+            For each question:
+
+            Present a realistic scenario or problem
+            Require application of concepts rather than mere definitions
+            Encourage critical thinking and problem-solving skills
+            Include at least one question that involves interpreting or creating a data visualization
+            Ensure questions are relevant to current industry practices
+            
+            
+        4. Generative AI and Langchain Questions (8 questions):
         - Create medium-level questions on generative AI technologies, focusing on:
             a) Basic understanding of large language models (e.g., what is a Transformer, how does attention work)
             b) Common training techniques (e.g., fine-tuning, transfer learning)
-            c) Well-known generative AI models and their general capabilities (e.g., GPT-3, DALL-E, Stable Diffusion)
-            d) Common ethical considerations in generative AI (e.g., bias, privacy)
-            e) Popular applications in various domains (e.g., chatbots, image generation, text summarization)
-            f) Introduction to multimodal AI systems
-            g) Basic techniques for improving model outputs (e.g., prompt engineering, fine-tuning)
-            h) Current trends in generative AI research and development
+            c) Popular applications in various domains (e.g., chatbots, image generation, text summarization)
+            d) Basic techniques for improving model outputs (e.g., prompt engineering, fine-tuning)
+            e) Basic chain types and their use cases (e.g., LLMChain, SequentialChain)
+            f) Simple agent types and their decision-making processes
+            g) Understanding of built-in LangChain components (e.g., prompts, output parsers)
+            h) Introduction to vector stores and their basic operations
         - Include questions that require a general understanding of generative AI concepts
         - Focus on scenarios that demonstrate common applications and limitations of current generative AI technologies
         - Ensure questions encourage the candidate to think about practical issues in AI development and use
-
-        4. LangChain Questions (8 questions):
-        - Develop medium-level questions on the LangChain framework, covering:
-            a) Basic chain types and their use cases (e.g., LLMChain, SequentialChain)
-            b) Simple agent types and their decision-making processes
-            c) Common memory types and their applications (e.g., buffer memory, summary memory)
-            d) Basic prompt engineering techniques within LangChain
-            e) Integration of common tools and APIs in LangChain applications
-            f) Basic performance considerations in LangChain applications
-            g) Understanding of built-in LangChain components (e.g., prompts, output parsers)
-            h) Introduction to vector stores and their basic operations
-        - Create questions that test general understanding of LangChain's main components and principles
         - Include scenario-based questions that require basic problem-solving skills to design LangChain solutions
         - Focus on common practices and typical challenges in building LangChain applications
         - Ensure questions cover both conceptual knowledge and basic implementation considerations
-
-
+ 
+        
         Instructions:
         - For Logical Reasoning Questions: Use the provided questions exactly as they are. Choose questions randomly, not sequentially.
         - For all other categories: Create new, relevant questions based on the job position and skills provided.
@@ -255,7 +264,7 @@ def generate_questions(skills_with_scale, experience, projects):
 
 
 def main():
-    st.title("Automated Interview Quiz Generator")
+    st.title("Skills Assesment Quiz Questions")
 
     # Initialize session state variables
     if "selected_skills" not in st.session_state:
@@ -462,6 +471,10 @@ def display_scorecard(scorecard):
         )
         # Add a progress bar for total score
         st.progress(total_percentage / 100)
+        if total_percentage >= 60:
+            st.markdown('<p style="color:green; font-size:24px;">You qualified the skills assessment.</p>', unsafe_allow_html=True)
+        else:
+            st.markdown('<p style="color:red; font-size:24px;">You did not qualify the skills assessment.</p>', unsafe_allow_html=True)    
 
 
 if __name__ == "__main__":
