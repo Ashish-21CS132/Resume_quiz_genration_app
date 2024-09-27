@@ -90,7 +90,7 @@ def extract_info_from_pdf_new(pdf_file):
 
     # Extract specific skills
     skills_list = re.findall(
-        r"\b(Java|Python|C\+\+|JavaScript|SQL|HTML|CSS|Django|React|NodeJS|ExpressJS|Docker|Langchain|MongoDB|Machine Learning)\b",
+        r"\b(Java|Python|C|C\+\+|JavaScript|MySQL|PostgreSQL|HTML|CSS|AWS|Django|React|NodeJS|ExpressJS|Docker|Langchain|fastapi|flask|MongoDB|Machine Learning)\b",
         skills_section,
         re.IGNORECASE,
     )
