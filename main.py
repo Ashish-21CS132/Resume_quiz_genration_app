@@ -414,8 +414,8 @@ def calculate_scorecard(quiz_data, user_answers):
         # "Communication": {"correct": 0, "total": 0},
         # "Work Experience": {"correct": 0, "total": 0},
         # "Generative AI and LangChain": {"correct": 0, "total": 0},
-        "Generative AI ": {"correct": 0, "total": 0},
-        "LangChain": {"correct": 0, "total": 0},
+        "DataScience": {"correct": 0, "total": 0},
+        "Generative AI & LangChain": {"correct": 0, "total": 0},
         "Total": {"correct": 0, "total": 0},
     }
 
@@ -424,8 +424,8 @@ def calculate_scorecard(quiz_data, user_answers):
         "Logical Reasoning Questions": "Logical Reasoning",
         # "Communication Questions": "Communication",
         # "Work Experience Questions": "Work Experience"
-        "Generative AI Questions": "Generative AI ",
-        "LangChain Questions": "LangChain",
+        "DataScience Questions": "DataScience",
+        "Generative AI and Langchain Questions": "Generative AI & LangChain",
     }
 
     for category in quiz_data.quiz:
