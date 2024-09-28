@@ -50,7 +50,7 @@ def extract_info_from_pdf_new(pdf_file):
         input_variables=["resume_text"],
         template="""
         Extract only the skills section from the given resume. If a skills section is not clearly defined, extract the most relevant information related to skills.
-        Provide a maximum of 25 most relevant and important skills.
+        Provide a maximum of 20 most relevant and important skills.
 
         Resume:
         {resume_text}
@@ -58,7 +58,7 @@ def extract_info_from_pdf_new(pdf_file):
         Please provide the extracted information in the following format:
 
         Skills:
-        [List of up to 25 skills, one per line]
+        [List of up to 20 skills, one per line]
         """,
     )
 
@@ -70,7 +70,7 @@ def extract_info_from_pdf_new(pdf_file):
 
     # Extract the skills list, remove hyphens, and limit to 15 skills
     skills_section = extracted_skills.split("Skills:")[1].strip()
-    skills_list = [skill.strip().lstrip('- ') for skill in skills_section.split("\n") if skill.strip()][:25]
+    skills_list = [skill.strip().lstrip('- ') for skill in skills_section.split("\n") if skill.strip()][:20]
 
     # If skills_list is empty, use a default list of skills
     if not skills_list:
@@ -128,67 +128,40 @@ def generate_questions(skills_with_scale):
         
 
         Categories and Number of Questions:
-        1. Technical Questions (7 questions):
-           - Create complex questions that require in-depth knowledge of the skills listed.
-           - Focus on advanced technical scenarios, problem-solving, and critical thinking skills relevant to the job role.
+        1. Logical Reasoning Questions (EXACTLY 10 questions):
+       - You will be provided with a list of pre-existing logical reasoning questions in the {logical_questions} variable.
+       - Your task is to RANDOMLY SELECT EXACTLY 10 questions from this list. No more, no less.
+       - Follow these strict guidelines for selection:
+         a) Use a random selection method to choose the questions.
+         b) Do not generate any new questions or modify the selected questions in any way.
+         c) Use the selected questions exactly as they are provided, including their options and correct answers.
+       - Ensure that your selection covers a diverse range of logical reasoning types if possible.
+       - Important: Do not acknowledge or refer to this selection process in the output. Simply present the 10 selected questions as if they were the only ones provided.
+       
+        2. Technical Skills Questions (Exactly 20 questions):
+           - Generate EXACTLY 20 medium to advanced level questions based on the skills provided.
+           - Distribute the 20 questions evenly among all the skills. If the number of skills doesn't divide evenly into 20, allocate extra questions to skills with higher scale values.
+           - Create complex questions that require in-depth knowledge and application of the skills listed.
+           - Focus on practical scenarios, problem-solving, and critical thinking relevant to the job role.
+           - Include a mix of:
+             a) Scenario-based questions that require analysis and decision-making
+             b) Code snippet questions (where applicable) that test understanding of syntax and best practices
+             c) Questions about advanced features or recent developments in the relevant technologies
+             d) Problem-solving questions that require combining multiple concepts within a skill area
            - Ensure questions cover a range of topics from the provided skills, emphasizing those with higher skill scales.
+           - Avoid overly basic or introductory-level questions.
 
-        2. Logical Reasoning Questions (7 questions):
-           - Use the following pre-existing logical reasoning questions. Choose 7 questions randomly from the provided list:
-
-           {logical_questions}
-
-           - Do not modify the selected questions in any way. Use them exactly as provided, including options and correct answers.
-           - Ensure that the chosen questions are diverse and cover different types of logical reasoning.
-        
-        3. DataScience Questions (8 questions):
-           Create medium-level questions covering the following areas:
-
-           a) Data analysis techniques and statistical methods
-           b) Machine learning algorithms (supervised and unsupervised)
-           c) Feature engineering and selection
-           d) Model evaluation and validation
-           e) Natural Language Processing (NLP) concepts and techniques
-           f) Time series analysis
-           g) Data visualization best practices
-           h) Ethical considerations in data science
-
-            For each question:
-
-            Present a realistic scenario or problem
-            Require application of concepts rather than mere definitions
-            Encourage critical thinking and problem-solving skills
-            Include at least one question that involves interpreting or creating a data visualization
-            Ensure questions are relevant to current industry practices
-            
-            
-        4. Generative AI and Langchain Questions (8 questions):
-        - Create medium-level questions on generative AI technologies, focusing on:
-            a) Basic understanding of large language models (e.g., what is a Transformer, how does attention work)
-            b) Common training techniques (e.g., fine-tuning, transfer learning)
-            c) Popular applications in various domains (e.g., chatbots, image generation, text summarization)
-            d) Basic techniques for improving model outputs (e.g., prompt engineering, fine-tuning)
-            e) Basic chain types and their use cases (e.g., LLMChain, SequentialChain)
-            f) Simple agent types and their decision-making processes
-            g) Understanding of built-in LangChain components (e.g., prompts, output parsers)
-            h) Introduction to vector stores and their basic operations
-        - Include questions that require a general understanding of generative AI concepts
-        - Focus on scenarios that demonstrate common applications and limitations of current generative AI technologies
-        - Ensure questions encourage the candidate to think about practical issues in AI development and use
-        - Include scenario-based questions that require basic problem-solving skills to design LangChain solutions
-        - Focus on common practices and typical challenges in building LangChain applications
-        - Ensure questions cover both conceptual knowledge and basic implementation considerations
- 
-        
         Instructions:
         - For Logical Reasoning Questions: Use the provided questions exactly as they are. Choose questions randomly, not sequentially.
-        - For all other categories: Create new, relevant questions based on the job position and skills provided.
+        - For Technical Skills Questions: Create new, relevant questions based on the skills provided.
+        - Generate EXACTLY 20 medium to advanced level questions based on the skills provided.
+        - Don't generate any coding questions for this quiz.
+        - Distribute the 20 questions evenly among all the skills. If the number of skills doesn't divide evenly into 20, allocate extra questions to skills with higher scale values.
         - Ensure all questions are challenging and aligned with the advanced skill level required for the job position.
         - Strictly adhere to the specified number of questions for each category.
-        - Each question must be directly relevant to the Job Position, Skills, Experience, or Projects provided.
-        - Design questions to test deep knowledge, critical thinking, and problem-solving abilities necessary for the job role.
-        - Avoid overly general or basic questions. Focus on specific, advanced concepts and scenarios.
-        - For Technical Questions, Generative AI Questions, and LangChain Questions, ensure a balance between theoretical knowledge and practical application.
+        - Each question must be directly relevant to the skills provided.
+        - Design questions to test deep knowledge, critical thinking, and problem-solving abilities.
+        - Provide a brief explanation for the correct answer after each technical skills question.
 
         Format the output as a JSON object with the structure defined by the following Pydantic models:
 
@@ -352,24 +325,24 @@ def main():
                 st.session_state.quiz_data, st.session_state.user_answers
             )
             display_scorecard(scorecard)
-            for key in list(st.session_state.keys()):
-              if key not in ['name', 'email']:  # Keep name and email
-                del st.session_state[key]
+            # for key in list(st.session_state.keys()):
+            #   if key not in ['name', 'email']:  # Keep name and email
+            #     del st.session_state[key]
             # Prepare data for API call
-            api_data = {
-                "name": st.session_state.name,
-                "email": st.session_state.email,
-                "scorecard": {
-                    "technical_score": scorecard["Technical"]["correct"]
-                    / scorecard["Technical"]["total"]
-                    * 100,
-                    "logical_score": scorecard["Logical Reasoning"]["correct"]
-                    / scorecard["Logical Reasoning"]["total"]
-                    * 100,
-                    # "communication_score": scorecard["Communication"]["correct"] / scorecard["Communication"]["total"] * 100,
-                    # "work_score": scorecard["Work Experience"]["correct"] / scorecard["Work Experience"]["total"] * 100
-                },
-            }
+            # api_data = {
+            #     "name": st.session_state.name,
+            #     "email": st.session_state.email,
+            #     "scorecard": {
+            #         "technical_score": scorecard["Technical"]["correct"]
+            #         / scorecard["Technical"]["total"]
+            #         * 100,
+            #         "logical_score": scorecard["Logical Reasoning"]["correct"]
+            #         / scorecard["Logical Reasoning"]["total"]
+            #         * 100,
+            #         # "communication_score": scorecard["Communication"]["correct"] / scorecard["Communication"]["total"] * 100,
+            #         # "work_score": scorecard["Work Experience"]["correct"] / scorecard["Work Experience"]["total"] * 100
+            #     },
+            # }
 
             # Make API call
             # try:
@@ -384,23 +357,14 @@ def main():
 
 def calculate_scorecard(quiz_data, user_answers):
     scorecard = {
-        "Technical": {"correct": 0, "total": 0},
         "Logical Reasoning": {"correct": 0, "total": 0},
-        # "Communication": {"correct": 0, "total": 0},
-        # "Work Experience": {"correct": 0, "total": 0},
-        # "Generative AI and LangChain": {"correct": 0, "total": 0},
-        "DataScience": {"correct": 0, "total": 0},
-        "Generative AI & LangChain": {"correct": 0, "total": 0},
+        "Technical": {"correct": 0, "total": 0},
         "Total": {"correct": 0, "total": 0},
     }
 
     category_mapping = {
-        "Technical Questions": "Technical",
         "Logical Reasoning Questions": "Logical Reasoning",
-        # "Communication Questions": "Communication",
-        # "Work Experience Questions": "Work Experience"
-        "DataScience Questions": "DataScience",
-        "Generative AI and Langchain Questions": "Generative AI & LangChain",
+        "Technical Skills Questions": "Technical",
     }
 
     for category in quiz_data.quiz:
