@@ -44,13 +44,13 @@ def extract_info_from_pdf_new(pdf_file):
     for page in reader.pages:
         resume_text += page.extract_text()
 
-    openai_llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=1000, temperature=0.7)
+    openai_llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=2000, temperature=0)
 
-    prompt_template_resume = PromptTemplate(
+    prompt_template = PromptTemplate(
         input_variables=["resume_text"],
         template="""
-        Extract only the skills section from the given resume. If a skills section is not clearly defined, extract the most relevant information related to skills.
-        Provide a maximum of 20 most relevant and important skills.
+        Extract ALL of the following information from the given resume: skills, work experience, and projects.
+        Be comprehensive and include all details for EVERY work experience and EVERY project mentioned.
 
         Resume:
         {resume_text}
@@ -58,28 +58,63 @@ def extract_info_from_pdf_new(pdf_file):
         Please provide the extracted information in the following format:
 
         Skills:
-        [List of up to 20 skills, one per line]
-        """,
+        [List the top 20 most relevant and important skills. Each skill should be on a new line, prefixed with a hyphen (-). Do not include any additional explanation or categorization.]
+
+        Work Experience:
+        [For EACH AND EVERY job mentioned in the resume, provide ALL details in the following format:
+        ---
+        Company: [Company Name]
+        Position: [Job Title]
+        Dates: [Employment Period]
+        Responsibilities and Achievements:
+        - [Detailed bullet point 1]
+        - [Detailed bullet point 2]
+        ...
+        Include EVERY piece of information mentioned for each position, using bullet points for responsibilities and achievements. Do not omit any positions or details.]
+
+        Projects:
+        [For EACH AND EVERY project mentioned in the resume, provide ALL details in the following format:
+        ---
+        Project Name: [Name of the Project]
+        Description: [Full project description]
+        Technologies: [All technologies used]
+        Role: [Your role in the project]
+        Outcomes: [Project outcomes or results]
+        Include EVERY piece of information mentioned for each project. Do not omit any projects or details.]
+
+        Ensure that ALL work experiences and ALL projects from the resume are included in your response, no matter how many there are.
+        """
     )
 
-    # Set up LLMChain for the skills extraction
-    extraction_chain = LLMChain(llm=openai_llm, prompt=prompt_template_resume)
+    # Set up LLMChain for the extraction
+    extraction_chain = LLMChain(llm=openai_llm, prompt=prompt_template)
 
-    # Get the extracted skills by running the chain
-    extracted_skills = extraction_chain.run({"resume_text": resume_text})
+    # Get the extracted information by running the chain
+    extracted_info = extraction_chain.run({"resume_text": resume_text})
 
-    # Extract the skills list, remove hyphens, and limit to 15 skills
-    skills_section = extracted_skills.split("Skills:")[1].strip()
-    skills_list = [skill.strip().lstrip('- ') for skill in skills_section.split("\n") if skill.strip()][:20]
+    # Process the extracted information
+    sections = re.split(r"(?m)^(Skills:|Work Experience:|Projects:)", extracted_info)[1:]
+    sections = [sections[i].strip() + sections[i+1].strip() for i in range(0, len(sections), 2)]
 
-    # If skills_list is empty, use a default list of skills
-    if not skills_list:
-        skills_list = ["C++", "Python", "Java"]
+    skills_section = next((s for s in sections if s.startswith("Skills:")), "")
+    experience_section = next((s for s in sections if s.startswith("Work Experience:")), "")
+    projects_section = next((s for s in sections if s.startswith("Projects:")), "")
 
-    return list(set(skills_list))
+    # Extract skills
+    skills_list = [skill.strip().lstrip('- ') for skill in skills_section.split("\n")[1:] if skill.strip()][:20]
+
+    # Process experience section
+    experience_list = experience_section.split("---")[1:]  # Split individual experiences
+    experience_list = [exp.strip() for exp in experience_list if exp.strip()]
+
+    # Process projects section
+    projects_list = projects_section.split("---")[1:]  # Split individual projects
+    projects_list = [proj.strip() for proj in projects_list if proj.strip()]
+
+    return list(set(skills_list)), experience_list, projects_list
 
 
-def generate_questions(skills_with_scale):
+def generate_questions(skills_with_scale, experience, projects):
     # Read logical reasoning questions from file
     logical_questions = read_file(file_path)
     if not logical_questions:
@@ -113,62 +148,60 @@ def generate_questions(skills_with_scale):
     parser = PydanticOutputParser(pydantic_object=Quiz)
 
     prompt_template = PromptTemplate(
-        input_variables=[
-            
-            "skills",
-            # "experience",
-            # "projects",
-            "logical_questions",
-        ],
-        template="""
-        You are an expert in creating advanced educational content. Based on the following information, generate a challenging quiz with multiple-choice questions (MCQs) focused on the categories listed. Ensure each question has four answer options (labeled A, B, C, D) and only one correct answer.
+    input_variables=[
+        "skills",
+        "experience",
+        "projects",
+        "logical_questions",
+    ],
+    template="""
+    You are an expert in creating personalized, advanced educational content. Your task is to generate a challenging quiz with multiple-choice questions (MCQs) focused on logical reasoning and technical skills, tailored to the candidate's resume. Ensure each question has four answer options (labeled A, B, C, D) and only one correct answer.
 
-        
-        Skills with Scale: {skills}
-        
-
-        Categories and Number of Questions:
-        1. Logical Reasoning Questions (EXACTLY 10 questions):
+    Categories and Number of Questions:
+    1. Logical Reasoning Questions (EXACTLY 10 questions):
        - You will be provided with a list of pre-existing logical reasoning questions in the {logical_questions} variable.
-       - Your task is to RANDOMLY SELECT EXACTLY 10 questions from this list. No more, no less.
-       - Follow these strict guidelines for selection:
-         a) Use a random selection method to choose the questions.
-         b) Do not generate any new questions or modify the selected questions in any way.
-         c) Use the selected questions exactly as they are provided, including their options and correct answers.
-       - Ensure that your selection covers a diverse range of logical reasoning types if possible.
-       - Important: Do not acknowledge or refer to this selection process in the output. Simply present the 10 selected questions as if they were the only ones provided.
-       
-        2. Technical Skills Questions (Exactly 20 questions):
-           - Generate EXACTLY 20 medium to advanced level questions based on the skills provided.
-           - Distribute the 20 questions evenly among all the skills. If the number of skills doesn't divide evenly into 20, allocate extra questions to skills with higher scale values.
-           - Create complex questions that require in-depth knowledge and application of the skills listed.
-           - Focus on practical scenarios, problem-solving, and critical thinking relevant to the job role.
-           - Include a mix of:
-             a) Scenario-based questions that require analysis and decision-making
-             b) Code snippet questions (where applicable) that test understanding of syntax and best practices
-             c) Questions about advanced features or recent developments in the relevant technologies
-             d) Problem-solving questions that require combining multiple concepts within a skill area
-           - Ensure questions cover a range of topics from the provided skills, emphasizing those with higher skill scales.
-           - Avoid overly basic or introductory-level questions.
+       - Randomly select EXACTLY 10 questions from this list. No more, no less.
+       - Use the selected questions exactly as provided, including their options and correct answers.
+       - Ensure a diverse range of logical reasoning types if possible.
+       - Do not acknowledge or refer to this selection process in the output.
 
-        Instructions:
-        - For Logical Reasoning Questions: Use the provided questions exactly as they are. Choose questions randomly, not sequentially.
-        - For Technical Skills Questions: Create new, relevant questions based on the skills provided.
-        - Generate EXACTLY 20 medium to advanced level questions based on the skills provided.
-        - Don't generate any coding questions for this quiz.
-        - Distribute the 20 questions evenly among all the skills. If the number of skills doesn't divide evenly into 20, allocate extra questions to skills with higher scale values.
-        - Ensure all questions are challenging and aligned with the advanced skill level required for the job position.
-        - Strictly adhere to the specified number of questions for each category.
-        - Each question must be directly relevant to the skills provided.
-        - Design questions to test deep knowledge, critical thinking, and problem-solving abilities.
-        - Provide a brief explanation for the correct answer after each technical skills question.
+    2. Technical Skills Questions (EXACTLY 20 questions):
+       - Generate 20 medium to advanced level questions based on the provided skills, experience, and projects.
+       - Tailor these questions to the candidate's specific background and expertise.
+       Skills with Scale: {skills}
+       Work Experience: {experience}
+       Projects: {projects}
 
-        Format the output as a JSON object with the structure defined by the following Pydantic models:
+    Guidelines for Technical Skills Questions:
+    - Create complex, personalized questions that directly relate to the candidate's experience and projects.
+    - Prioritize questions based on the skills with higher scale values.
+    - Develop questions that demonstrate how well the candidate can apply their skills to real-world scenarios.
+    - Include a mix of question types:
+      a) Scenario-based questions inspired by the candidate's work experience
+      b) Project-specific questions that test deep understanding of technologies used
+      c) Problem-solving questions that combine multiple skills from the candidate's repertoire
+      d) Questions about advanced features or recent developments in technologies the candidate has worked with
+    - For each skill mentioned, create at least one question that connects it to a specific project or work experience listed.
+    - Avoid generic or basic questions; focus on the candidate's unique expertise and achievements.
+    - Provide a brief explanation for the correct answer, relating it back to the candidate's experience when possible.
 
-        {format_instructions}
+    Important Instructions:
+    - Strictly adhere to the specified number of questions for each category (10 logical, 20 technical).
+    - Ensure all technical questions are challenging and directly relevant to the candidate's profile.
+    - if you did't get any information about the candidate's skills, experience, and projects, please generate the generalized questions based on the skills.
+    
+    - Do not generate coding questions for this quiz.
+    - Design questions to test deep knowledge, critical thinking, and problem-solving abilities within the context of the candidate's experience.
+    - When referencing the candidate's projects or experience, use phrases like "In a project similar to [Project Name]..." or "Given your experience with [Technology]..." to maintain a sense of generality while still being personalized.
+
+    Format the output as a JSON object with the structure defined by the following Pydantic models:
+
+    {format_instructions}
+
+    Remember, the goal is to create a highly personalized and challenging quiz that accurately reflects the candidate's unique skills and experiences.
     """,
-        partial_variables={"format_instructions": parser.get_format_instructions()},
-    )
+    partial_variables={"format_instructions": parser.get_format_instructions()},
+)
 
     # Create the LLM chain
     chain = LLMChain(llm=llm, prompt=prompt_template)
@@ -179,8 +212,8 @@ def generate_questions(skills_with_scale):
             {
                 
                 "skills": skills_with_scale,
-                # "experience": experience,
-                # "projects": projects,
+                "experience": experience,
+                "projects": projects,
                 "logical_questions": logical_questions,
             }
         )
@@ -208,7 +241,7 @@ def generate_questions(skills_with_scale):
 
 
 def main():
-    st.title("Skills Assesment Quiz Questions")
+    st.title("Skills Assessment Quiz Questions")
 
     # Initialize session state variables
     if "selected_skills" not in st.session_state:
@@ -246,12 +279,12 @@ def main():
         if resume_pdf is not None:
             try:
                 with st.spinner("Extracting information from resume..."):
-                    st.session_state.extracted_skills=extract_info_from_pdf_new(resume_pdf)
-                    # (
-                    #     st.session_state.extracted_skills,
-                    #     # st.session_state.experience,
-                    #     # st.session_state.projects,
-                    # ) = extract_info_from_pdf_new(resume_pdf)
+                    
+                    (
+                        st.session_state.extracted_skills,
+                        st.session_state.experience,
+                        st.session_state.projects,
+                    ) = extract_info_from_pdf_new(resume_pdf)
             except Exception as e:
                 st.error(f"An error occurred: {e}")
         else:
@@ -297,8 +330,8 @@ def main():
                     st.session_state.quiz_data = generate_questions(
                         # job_title,
                         skills_with_scale,
-                        # st.session_state.experience,
-                        # st.session_state.projects,
+                        st.session_state.experience,
+                        st.session_state.projects,
                     )
 
                     # print(st.session_state.quiz_data)
@@ -325,9 +358,9 @@ def main():
                 st.session_state.quiz_data, st.session_state.user_answers
             )
             display_scorecard(scorecard)
-            for key in list(st.session_state.keys()):
-              if key not in ['name', 'email']:  # Keep name and email
-                del st.session_state[key]
+            # for key in list(st.session_state.keys()):
+            #   if key not in ['name', 'email']:  # Keep name and email
+            #     del st.session_state[key]
             # Prepare data for API call
             # api_data = {
             #     "name": st.session_state.name,
@@ -358,13 +391,13 @@ def main():
 def calculate_scorecard(quiz_data, user_answers):
     scorecard = {
         "Logical Reasoning": {"correct": 0, "total": 0},
-        "Technical": {"correct": 0, "total": 0},
+        "Technical Skills": {"correct": 0, "total": 0},
         "Total": {"correct": 0, "total": 0},
     }
 
     category_mapping = {
         "Logical Reasoning Questions": "Logical Reasoning",
-        "Technical Skills Questions": "Technical",
+        "Technical Skills Questions": "Technical Skills",
     }
 
     for category in quiz_data.quiz:
@@ -393,7 +426,6 @@ def display_scorecard(scorecard):
                 total = score["total"]
                 percentage = (correct / total) * 100 if total > 0 else 0
 
-                # Use an expander for each category to make it collapsible
                 with st.expander(f"{category} Score", expanded=True):
                     st.markdown(f"**Correct**: {correct}/{total}")
                     st.progress(percentage / 100)
@@ -401,20 +433,14 @@ def display_scorecard(scorecard):
 
         total_correct = scorecard["Total"]["correct"]
         total_questions = scorecard["Total"]["total"]
-        total_percentage = (
-            (total_correct / total_questions) * 100 if total_questions > 0 else 0
-        )
+        total_percentage = (total_correct / total_questions) * 100 if total_questions > 0 else 0
 
-        st.write(
-            f"Total Score: {total_correct}/{total_questions} ({total_percentage:.2f}%)"
-        )
-        # Add a progress bar for total score
+        st.write(f"Total Score: {total_correct}/{total_questions} ({total_percentage:.2f}%)")
         st.progress(total_percentage / 100)
         if total_percentage >= 60:
             st.markdown('<p style="color:green; font-size:24px;">You qualified the skills assessment.</p>', unsafe_allow_html=True)
         else:
-            st.markdown('<p style="color:red; font-size:24px;">You did not qualify the skills assessment.</p>', unsafe_allow_html=True)    
-
+            st.markdown('<p style="color:red; font-size:24px;">You did not qualify the skills assessment.</p>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
