@@ -358,9 +358,9 @@ def main():
                 st.session_state.quiz_data, st.session_state.user_answers
             )
             display_scorecard(scorecard)
-            # for key in list(st.session_state.keys()):
-            #   if key not in ['name', 'email']:  # Keep name and email
-            #     del st.session_state[key]
+            for key in list(st.session_state.keys()):
+              if key not in ['name', 'email']:  # Keep name and email
+                del st.session_state[key]
             # Prepare data for API call
             # api_data = {
             #     "name": st.session_state.name,
